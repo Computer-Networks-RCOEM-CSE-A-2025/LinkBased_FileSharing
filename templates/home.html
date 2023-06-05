@@ -15,7 +15,6 @@
   <input type="file" id="fileInput" multiple>
 <button onclick="{uploadFiles()}">Upload</button>
   <div id="link" style="font-size:2rem;"></div>
-  {% comment %} <div class="coping" onclick="copyToClipboard('hello')">Copy link to clipboard</div> {% endcomment %}
 
   <script rel='test/j'>
 
@@ -26,7 +25,7 @@
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      alert('Text copied to clipboard!');
+      alert('Link copied to clipboard! Paste on Browser to download as ZIP!!!');
     }
     
     function uploadFiles() {
