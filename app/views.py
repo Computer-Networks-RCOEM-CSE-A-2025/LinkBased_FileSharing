@@ -1,48 +1,196 @@
 from django.shortcuts import render
-from tkinter import E
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from serializer import *
-
-from django.urls import reverse
+from django.contrib.auth import authenticate, login,logout
+from django.contrib.auth.models import User
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+import jwt
+import datetime
+from .models import *
 
 # Create your views here.
 
+def test(request):
+    return render(request, 'test.html', {})
+
+@api_view(['GET'])
 def home(request):
-    return render(request,'home.html',{})
+    # Get the token from the request's cookies
+    token = request.COOKIES.get('token')
 
-def download(request,uid):
-    print("********************",uid)
+    if not token:
+        return Response({'status': 400, 'message': 'Authentication failed'})
+
+    try:
+        # Verify the JWT token and decode the payload
+        payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+
+        # Retrieve the user based on the user ID in the payload
+        user = User.objects.filter(id=payload['id']).first()
+
+        if user:
+            return Response({'status': 200, 'message': 'home page', 'user': user.username})
+        else:
+            return Response({'status': 400, 'message': 'User not found'})
+
+    except jwt.ExpiredSignatureError:
+        return Response({'status': 400, 'message': 'Token has expired'})
+
+    except jwt.DecodeError:
+        return Response({'status': 400, 'message': 'Token is invalid'})
+
+    except Exception as e:
+        return Response({'status': 400, 'message': 'Token Error: ' + str(e)})
+
+
+def download(request, uid):
+    print("********************", uid)
     folder = Folder.objects.get(pk=uid)
-    print("********************",folder)
+    print("********************", folder)
     files = Files.objects.filter(folder=folder)
+    return render(request, 'download.html', {'folder': folder, 'files': files, 'uid': uid})
 
 
-    return render(request,'download.html',{'folder':folder,'files':files,'uid':uid})
+class UserAPI(APIView):
+    def post(self, request):
+        data = request.data
+        try:
+            serializer = RegisterSerializer(data=data)
+            if serializer.is_valid():
+                user = User.objects.create_user(username=serializer.data['username'], email=serializer.data['email'])
+                user.set_password(serializer.data['password'])
+                user.save()
+                return Response({'status': 200, 'message': 'Registration Successful'})
+            return Response({'status': 400, 'message': 'Error in Registration'})
+        except Exception as e:
+            return Response({'status': 400, 'message': 'Error: ' + str(e)})
 
 
-    
+@api_view(['POST'])
+def HandleFileUpload(request):
+    token = request.COOKIES.get('token')
 
-   
+    if not token:
+        return Response({'status': 400, 'message': 'Authentication failed'})
+
+    try:
+        # Verify the JWT token and decode the payload
+        payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+
+        # Retrieve the user based on the user ID in the payload
+        user = User.objects.filter(id=payload['id']).first()
+
+        if user:
+            pass
+        else:
+            return Response({'status': 400, 'message': 'User not found'})
+
+    except jwt.ExpiredSignatureError:
+        return Response({'status': 400, 'message': 'Token has expired'})
+
+    except jwt.DecodeError:
+        return Response({'status': 400, 'message': 'Token is invalid'})
+
+    except Exception as e:
+        print('Error')
 
 
+    try:
+        data = request.data
 
-class HandelFileUpload(APIView):
-    def post(self,request):
+        serializer = FileSerializer(data=data, context={'user': user})
+        
+        if serializer.is_valid():
+            serializer.save()
+            
+            return Response({
+                        'status': 200,
+                        'message': 'Files Uploaded Successfully',
+                        'data': serializer.data
+                    })
+        return Response({
+                    'status': 400,
+                    'message': 'Something went wrong',
+                    'data': serializer.errors
+                })
+    except Exception as e:
+        return Response({'status': 400, 'message': 'Error: ' + str(e)})
+
+
+class LoginAPI(APIView):
+    def post(self, request):
         try:
             data = request.data
-            serializer = FileSerializer(data=data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    'status':200,
-                    'message':'Files Uploaded Successfully',
-                    'data': serializer.data
-                })
-            return Response({
-                'status': 400,
-                'message' : 'Something went wrong',
-                'data' : serializer.errors
-            })
+            username = data.get('username')
+            password = data.get('password')
+
+            user = authenticate(username=username, password=password)
+
+            if user is not None:
+
+                # Create a JWT token
+                payload = {
+                    'id': user.id,
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=1440),
+                    'iat': datetime.datetime.utcnow()
+                }
+
+                token = jwt.encode(payload, 'secret', algorithm='HS256')
+                response = Response({'status': 200, 'token': token})
+
+                # Set the token as a cookie in the response
+                response.set_cookie(key='token', value=token)
+                return response
+            else:
+                return Response({'status': 400, 'message': 'Invalid Credentials'})
+
         except Exception as e:
-            print(e) 
+            return Response({'status': 400, 'message': 'Error: ' + str(e)})
+
+@api_view(['GET'])
+def Logout(request):
+    try:
+        response = Response({'status': 200, 'message': 'Logging-Out'})
+        response.delete_cookie('token')
+        return response
+    except:
+        return Response({'status':400,'message':'Error in Logging-Out'})
+
+@api_view(['GET'])
+def getLinks(request):
+    token = request.COOKIES.get('token')
+
+    if not token:
+        return Response({'status': 400, 'message': 'Authentication failed'})
+
+    try:
+        # Verify the JWT token and decode the payload
+        payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+
+        # Retrieve the user based on the user ID in the payload
+        user = User.objects.filter(id=payload['id']).first()
+
+        if user:
+            pass
+        else:
+            return Response({'status': 400, 'message': 'User not found'})
+
+    except jwt.ExpiredSignatureError:
+        return Response({'status': 400, 'message': 'Token has expired'})
+
+    except jwt.DecodeError:
+        return Response({'status': 400, 'message': 'Token is invalid'})
+
+    except Exception as e:
+        print('Error')
+    
+    try:
+        links = Link.objects.filter(user=user)
+        serializer = LinkSerializer(links,many=True)
+        
+        return Response({'status':200,'data':serializer.data})
+    except:
+        return Response({'status':400,'message':'error in links extraction'})
