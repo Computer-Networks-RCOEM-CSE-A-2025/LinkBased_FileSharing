@@ -31,6 +31,7 @@ class FileSerializer(serializers.Serializer):
 
     def create(self,validated_data):
         user = self.context.get('user')
+        name = self.context.get('name')
 
         # Check if the user is available in the context
         if not user:
@@ -44,7 +45,7 @@ class FileSerializer(serializers.Serializer):
             filesObjs.append(fileobj)
 
         self.zippingFile(folder.uid)
-        link = Link(user = user,link = "http://localhost:8000/download/"+str(folder.uid),folder=folder)
+        link = Link(user = user,name = name,link = "http://localhost:8000/download/"+str(folder.uid),folder=folder)
         link.save()
 
         return {'files':{}, "folder" : str(folder.uid)}
@@ -53,4 +54,4 @@ class FileSerializer(serializers.Serializer):
 class LinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Link
-        fields = ['date','link']
+        fields = ['date','link','name']

@@ -1,5 +1,36 @@
-<h1>HI</h1>
-<div>{{folder}}</div>
+ {% comment %} <h1>HI</h1>
+<div>{{folder}}</div> {% endcomment %}
 
-<a href="/media/zip/{{uid}}.zip">Download</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download</title>
+
+    <!-- Link to the Tailwind CSS stylesheet (You can use a CDN or local file) -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body >
+    <div class="bg-gray-900 min-h-screen w-screen"> 
+        <h1 class="text-center text-white text-3xl font-mono pt-24">Your Files, Anytime, Anywhere</h1>
+        {% comment %} <div class="flex justify-center pt-8 pb-12">
+            <img src="https://img.freepik.com/free-vector/file-transfer-concept-illustration_114360-580.jpg" class="w-2/6 h-80 rounded-3xl"/>
+        </div>   {% endcomment %}
+        
+        <div class="flex justify-center pt-8 pb-12">
+            <img src="https://img.freepik.com/free-vector/file-transfer-concept-illustration_114360-580.jpg" class="w-full md:w-2/6 h-auto rounded-3xl" alt="File Transfer Concept">
+        </div>
+
+        <div class="flex justify-center">
+            <a href="/media/zip/{{uid}}.zip" class="bg-gray-600 text-white font-mono px-6 py-2 text-2xl rounded-3xl">Download</a> 
+        </div>
+
+        <div class="flex justify-center pt-4">
+            <a href="http://localhost:3000/" class="text-white font-mono px-6 py-2">Visit our Website to start Sharing!!!</a> 
+        </div>
+    </div>
+</body>
+</html>
+
 

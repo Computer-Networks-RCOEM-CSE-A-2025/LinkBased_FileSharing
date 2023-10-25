@@ -47,12 +47,14 @@ def home(request):
 
 
 def download(request, uid):
-    print("********************", uid)
-    folder = Folder.objects.get(pk=uid)
-    print("********************", folder)
-    files = Files.objects.filter(folder=folder)
-    return render(request, 'download.html', {'folder': folder, 'files': files, 'uid': uid})
-
+    try:
+        # print("********************", uid)
+        folder = Folder.objects.get(pk=uid)
+        # print("********************", folder)
+        files = Files.objects.filter(folder=folder)
+        return render(request, 'download.html', {'folder': folder, 'files': files, 'uid': uid})
+    except:
+        return render(request,'NotFound.html')
 
 class UserAPI(APIView):
     def post(self, request):
@@ -71,7 +73,10 @@ class UserAPI(APIView):
 
 @api_view(['POST'])
 def HandleFileUpload(request):
-    token = request.COOKIES.get('token')
+    token = request.query_params.get('t[token]')
+    name = request.query_params.get('t[name]') 
+    # print(token)
+    # print(name) 
 
     if not token:
         return Response({'status': 400, 'message': 'Authentication failed'})
@@ -99,9 +104,9 @@ def HandleFileUpload(request):
 
 
     try:
-        data = request.data
-
-        serializer = FileSerializer(data=data, context={'user': user})
+        files = request.data.getlist('files') 
+        # print(files)
+        serializer = FileSerializer(data={'files': files}, context={'user': user,'name':name})
         
         if serializer.is_valid():
             serializer.save()
@@ -159,9 +164,9 @@ def Logout(request):
     except:
         return Response({'status':400,'message':'Error in Logging-Out'})
 
-@api_view(['GET'])
+@api_view(['POST'])
 def getLinks(request):
-    token = request.COOKIES.get('token')
+    token = request.data['token']
 
     if not token:
         return Response({'status': 400, 'message': 'Authentication failed'})
@@ -194,3 +199,20 @@ def getLinks(request):
         return Response({'status':200,'data':serializer.data})
     except:
         return Response({'status':400,'message':'error in links extraction'})
+
+
+@api_view(['POST'])
+def deleteLink(request):
+    link = request.data['link']
+    try:
+        if link is not "":
+            # linkObj = Link.objects.get(link=link)
+            url_parts = link.split('/')
+            last_part = url_parts[-1]
+
+            folder = Folder.objects.get(uid=last_part)
+            folder.delete()
+            return Response({'status':200,'message':'Deletion Successful'})
+        return Response({'status':400,'message':'Invalid String'})
+    except:
+        return Response({'status':400,'message':'Error in Link Deletion'})

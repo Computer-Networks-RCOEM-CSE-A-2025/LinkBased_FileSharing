@@ -24,6 +24,7 @@ class Files(models.Model):
 
 class Link(models.Model):
     user = models.ForeignKey(User,null=False,on_delete=models.CASCADE)
+    name = models.CharField(max_length=300,null=True,blank=True)
     link = models.TextField()
     folder = models.OneToOneField(Folder,null=False,on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)

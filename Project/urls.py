@@ -18,6 +18,7 @@ urlpatterns = [
     path('user/',LoginAPI.as_view(),name='login api view'),
     path('logout/',Logout,name="Logging Out"),
     path('getlinks/',getLinks,name='getting all links of a user'),
+    path('deletelink/',deleteLink,name='Deleting a link'),
 ]
 
 if settings.DEBUG:
